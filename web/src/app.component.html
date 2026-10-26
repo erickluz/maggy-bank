@@ -1,0 +1,41 @@
+<header><div class="shell header"><div class="brand">Maggy<span>Bank</span></div><span class="badge">AMBIENTE SIMULADO · SEM DINHEIRO REAL</span><button *ngIf="token" type="button" class="text-button" (click)="logout()">Sair</button></div></header>
+<main class="shell">
+  <section *ngIf="!token" class="auth card">
+    <p class="eyebrow">SEU BANCO DE ESTUDO</p>
+    <h1>{{ mode === 'login' ? 'Boas-vindas' : 'Crie sua conta' }}</h1>
+    <p>Transfira valores simulados com a mesma clareza de um banco de verdade.</p>
+    <form (ngSubmit)="mode === 'login' ? login() : register()">
+      <label *ngIf="mode === 'register'">Nome de exibição<input name="displayName" [(ngModel)]="displayName" required maxlength="120" autocomplete="name"></label>
+      <label>Nome de usuário<input name="username" [(ngModel)]="username" required minlength="3" maxlength="60" autocomplete="username"></label>
+      <label>Senha<input name="password" [(ngModel)]="password" type="password" required minlength="8" [attr.autocomplete]="mode === 'login' ? 'current-password' : 'new-password'"></label>
+      <button class="primary" [disabled]="busy">{{ busy ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Cadastrar' }}</button>
+    </form>
+    <button class="text-button" type="button" (click)="mode = mode === 'login' ? 'register' : 'login'; message = ''">{{ mode === 'login' ? 'Criar uma conta' : 'Já tenho uma conta' }}</button>
+  </section>
+
+  <ng-container *ngIf="token">
+    <div class="heading"><div><p class="eyebrow">CONTA SIMULADA</p><h1>Olá, {{ me?.displayName }}</h1></div><button type="button" class="secondary" (click)="refresh()">Atualizar</button></div>
+    <section *ngIf="me?.accountStatus === 'PENDING'" class="card"><h2>Preparando sua conta</h2><p>O crédito inicial será exibido quando a abertura terminar.</p></section>
+    <div *ngIf="account" class="dashboard">
+      <section class="card balance"><p class="eyebrow">SALDO DISPONÍVEL · BRL SIMULADO</p><strong>{{ format(account.balanceCents) }}</strong><p>Conta {{ account.accountNumber }} · {{ account.displayName }}</p></section>
+      <section class="card transfer"><h2>Transferir</h2><p>Informe a conta, confira o titular e confirme.</p>
+        <label>Conta de destino<input [(ngModel)]="recipientNumber" (ngModelChange)="recipient = undefined" [disabled]="!!requestId || busy" placeholder="Número da conta" inputmode="numeric"></label>
+        <button type="button" class="secondary" (click)="findRecipient()" [disabled]="!recipientNumber || busy || !!requestId">Conferir titular</button>
+        <div *ngIf="recipient" class="recipient"><p>Destinatário: <strong>{{ recipient.displayName }}</strong></p><p>Conta {{ recipient.accountNumber }}</p>
+          <label>Valor em reais simulados<input [(ngModel)]="amount" [disabled]="!!requestId || busy" placeholder="0,00" inputmode="decimal"></label>
+          <button type="button" class="primary" (click)="transfer()" [disabled]="busy || checking">{{ busy ? 'Processando…' : requestId ? 'Reenviar a mesma tentativa' : 'Confirmar transferência' }}</button>
+        </div>
+        <button *ngIf="requestId && !checking" type="button" class="secondary" (click)="checkResult()">Verificar novamente</button>
+      </section>
+      <section class="card statement"><h2>Extrato</h2><p *ngIf="!entries.length">Nenhuma movimentação.</p>
+        <div *ngFor="let entry of entries" class="entry"><div><strong>{{ entry.description }}</strong><small>{{ entry.occurredAt | date:'dd/MM/yyyy HH:mm' }} · Saldo {{ format(entry.balanceAfterCents) }}</small></div><span [class.negative]="entry.amountCents < 0">{{ format(entry.amountCents) }}</span></div>
+      </section>
+    </div>
+    <section *ngIf="receipt" class="card receipt" id="receipt"><p class="eyebrow">COMPROVANTE · OPERAÇÃO SIMULADA</p><h2>Transferência concluída</h2>
+      <strong class="receipt-amount">{{ format(receipt.amountCents) }}</strong><dl><dt>De</dt><dd>{{ receipt.sourceDisplayName }} · {{ receipt.sourceAccountNumber }}</dd><dt>Para</dt><dd>{{ receipt.destinationDisplayName }} · {{ receipt.destinationAccountNumber }}</dd><dt>Data</dt><dd>{{ receipt.completedAt | date:'dd/MM/yyyy HH:mm:ss' }}</dd><dt>ID da transferência</dt><dd>{{ receipt.transferId }}</dd></dl>
+      <button type="button" class="secondary no-print" (click)="print()">Imprimir comprovante</button>
+    </section>
+  </ng-container>
+  <p *ngIf="message" class="notice" role="status">{{ message }}</p>
+</main>
+<footer class="shell">Maggy Bank · Demonstração educacional. Nenhuma operação movimenta dinheiro real.</footer>

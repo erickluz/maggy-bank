@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Maggy Bank Finance API
+  version: 0.1.0
+paths:
+  /internal/accounts:
+    post:
+      summary: Abre conta e credita o valor inicial uma única vez
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAccountRequest'
+      responses:
+        '200':
+          description: Conta existente ou recém-criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+  /api/finance/account:
+    get:
+      summary: Consulta a própria conta e saldo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Conta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+  /api/finance/account/statement:
+    get:
+      summary: Consulta extrato imediato da própria conta
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lançamentos em ordem decrescente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatementEntry'
+  /api/finance/recipients/{accountNumber}:
+    get:
+      summary: Confere titular de uma conta de destino
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: accountNumber
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Destinatário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipient'
+  /api/finance/transfers:
+    post:
+      summary: Executa transferência interna idempotente
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '201':
+          description: Transferência concluída
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferReceipt'
+  /api/finance/transfers/{requestId}:
+    get:
+      summary: Recupera o resultado de uma tentativa de transferência
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: requestId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Comprovante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferReceipt'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    OpenAccountRequest:
+      type: object
+      required: [customerId, displayName]
+      properties:
+        customerId: { type: string, format: uuid }
+        displayName: { type: string }
+    Account:
+      type: object
+      required: [accountId, accountNumber, customerId, displayName, balanceCents, currency]
+      properties:
+        accountId: { type: string, format: uuid }
+        accountNumber: { type: string }
+        customerId: { type: string, format: uuid }
+        displayName: { type: string }
+        balanceCents: { type: integer, format: int64 }
+        currency: { type: string, enum: [BRL] }
+    Recipient:
+      type: object
+      required: [accountNumber, displayName]
+      properties:
+        accountNumber: { type: string }
+        displayName: { type: string }
+    TransferRequest:
+      type: object
+      required: [requestId, destinationAccountNumber, amountCents]
+      properties:
+        requestId: { type: string, format: uuid }
+        destinationAccountNumber: { type: string }
+        amountCents: { type: integer, format: int64, minimum: 1 }
+    TransferReceipt:
+      type: object
+      required: [transferId, requestId, sourceAccountNumber, sourceDisplayName, destinationAccountNumber, destinationDisplayName, amountCents, currency, completedAt]
+      properties:
+        transferId: { type: string, format: uuid }
+        requestId: { type: string, format: uuid }
+        sourceAccountNumber: { type: string }
+        sourceDisplayName: { type: string }
+        destinationAccountNumber: { type: string }
+        destinationDisplayName: { type: string }
+        amountCents: { type: integer, format: int64 }
+        currency: { type: string, enum: [BRL] }
+        completedAt: { type: string, format: date-time }
+    StatementEntry:
+      type: object
+      required: [operationId, type, amountCents, balanceAfterCents, occurredAt, description]
+      properties:
+        operationId: { type: string, format: uuid }
+        type: { type: string, enum: [OPENING_CREDIT, TRANSFER_IN, TRANSFER_OUT] }
+        amountCents: { type: integer, format: int64, description: Signed cents }
+        balanceAfterCents: { type: integer, format: int64 }
+        occurredAt: { type: string, format: date-time }
+        description: { type: string }

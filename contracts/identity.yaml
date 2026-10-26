@@ -1,0 +1,90 @@
+openapi: 3.0.3
+info:
+  title: Maggy Bank Identity API
+  version: 0.1.0
+paths:
+  /api/identity/register:
+    post:
+      summary: Cadastra cliente e inicia abertura da conta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Cliente cadastrado com conta pronta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '202':
+          description: Cliente cadastrado com abertura pendente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+  /api/identity/login:
+    post:
+      summary: Autentica cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /api/identity/me:
+    get:
+      summary: Retorna o cliente autenticado e estado de abertura
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [displayName, username, password]
+      properties:
+        displayName: { type: string }
+        username: { type: string }
+        password: { type: string, format: password }
+    RegistrationResponse:
+      type: object
+      required: [customerId, displayName, username, accountStatus]
+      properties:
+        customerId: { type: string, format: uuid }
+        displayName: { type: string }
+        username: { type: string }
+        accountStatus: { type: string, enum: [PENDING, READY] }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string, format: password }
+    LoginResponse:
+      type: object
+      required: [accessToken, tokenType, expiresIn]
+      properties:
+        accessToken: { type: string }
+        tokenType: { type: string, enum: [Bearer] }
+        expiresIn: { type: integer, description: Seconds }

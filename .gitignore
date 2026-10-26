@@ -1,0 +1,11 @@
+.worktrees/
+**/target/
+**/node_modules/
+**/.angular/
+**/dist/
+.env
+.env.*
+!.env.example
+*.log
+.idea/
+.vscode/
