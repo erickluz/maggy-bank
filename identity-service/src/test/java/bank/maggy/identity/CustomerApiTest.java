@@ -97,4 +97,25 @@ class CustomerApiTest {
                 .andExpect(jsonPath("$.message").value("Ocorreu um erro interno. Tente novamente mais tarde."))
                 .andExpect(content().string(not(containsString("segredo interno"))));
     }
+
+    @Test
+    void rejectsPasswordExceedingBcryptByteLimitWithoutReturningIt() throws Exception {
+        String password = "á".repeat(37);
+        String body = "{\"displayName\":\"Pessoa\",\"username\":\"pessoa\",\"password\":\"" + password + "\"}";
+        mvc.perform(post("/api/identity/register").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("A senha deve ter no máximo 72 bytes em UTF-8."))
+                .andExpect(content().string(not(containsString(password))));
+        verifyNoInteractions(customers);
+    }
+
+    @Test
+    void rejectsDuplicateUsernameOnUpdate() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(customers.findById(id)).thenReturn(Optional.of(new Customer(id, "Original", "original", "hash", "READY")));
+        when(customers.update(any())).thenThrow(new DuplicateKeyException("duplicate"));
+        mvc.perform(put("/api/identity/customers/{id}", id).contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Nome de usuário já utilizado."));
+    }
 }

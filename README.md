@@ -26,7 +26,9 @@ A documentação do serviço financeiro, executado diretamente, fica na mesma po
 
 A conta é aberta pela API interna `POST /internal/accounts`, com `X-Internal-Key`, `customerId` e `displayName`. A abertura é idempotente e credita R$ 1.000,00 fictícios uma única vez. O cadastro na identidade **ainda não chama essa API**: até integrar a abertura automática, um serviço autorizado deve abri-la antes da consulta de saldo ou transferência. O `READY` atual do cadastro não garante que a conta financeira exista.
 
-Para testar a integração REST com PostgreSQL, configure `FINANCE_TEST_DB_URL`, `FINANCE_TEST_DB_USER` e `FINANCE_TEST_DB_PASSWORD` para um banco exclusivo de teste e execute `mvn test` em `finance-service/`. O teste de integração aplica migrations e reverte os dados da jornada; sem a URL ele é ignorado. A autenticação da identidade é simulada nesse teste.
+Para testar a integração REST com PostgreSQL, configure `FINANCE_TEST_DB_URL`, `FINANCE_TEST_DB_USER` e `FINANCE_TEST_DB_PASSWORD` para um banco exclusivo de teste e execute `mvn test` em `finance-service/`. Os testes aplicam migrations; a jornada transacional é revertida e os testes de concorrência removem seus próprios registros. Sem a URL, esses testes são ignorados. A autenticação da identidade é simulada nesses testes.
+
+Os testes opcionais de persistência e concorrência da identidade usam `IDENTITY_TEST_DB_URL`, `IDENTITY_TEST_DB_USER` e `IDENTITY_TEST_DB_PASSWORD`. Configure um banco PostgreSQL exclusivo para testes com a migration de identidade já aplicada e execute `mvn test` em `identity-service/`. Sem as três variáveis, esses testes são ignorados. Os testes de concorrência utilizam transações independentes e removem somente os registros de teste criados.
 
 HTTP Basic não criptografa credenciais. O Compose usa HTTP apenas para estudo local; fora desse ambiente é indispensável HTTPS, inclusive entre serviços, além de autenticação e proteção adequadas. O CRUD de clientes ainda não está protegido e a interface web ainda não implementa o fluxo de login.
 

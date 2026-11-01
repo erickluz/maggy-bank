@@ -60,4 +60,13 @@ class AuthenticationApiTest {
         mvc.perform(get("/internal/identity/authenticate").header("X-Internal-Key", "errada").header("Authorization", basic("pessoa:senha"))).andExpect(status().isUnauthorized());
         verifyNoInteractions(customers);
     }
+
+    @Test
+    void refusesOversizedUtf8PasswordEvenWhenUsernameExists() throws Exception {
+        String password = "á".repeat(37);
+        mvc.perform(post("/api/identity/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"pessoa\",\"password\":\"" + password + "\"}"))
+                .andExpect(status().isUnauthorized()).andExpect(jsonPath("$.message").value("Credenciais inválidas."));
+        verifyNoInteractions(customers);
+    }
 }

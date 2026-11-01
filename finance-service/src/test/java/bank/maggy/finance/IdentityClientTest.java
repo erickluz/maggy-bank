@@ -5,6 +5,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,14 +38,44 @@ class IdentityClientTest {
             assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
             body.set("not json");
             assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
+            body.set("{}");
+            assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
+            body.set("{\"customerId\":null}");
+            assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
             status.set(401);
             assertStatus(HttpStatus.UNAUTHORIZED, client);
             status.set(403);
+            assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
+            status.set(500);
+            assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
+            status.set(302);
             assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
         } finally {
             server.stop(0);
         }
         assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
+    }
+
+    @Test
+    void timeoutFromIdentityNeverAuthenticatesClient() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var release = new CountDownLatch(1);
+        var executor = Executors.newSingleThreadExecutor();
+        server.setExecutor(executor);
+        server.createContext("/internal/identity/authenticate", exchange -> {
+            try { release.await(10, TimeUnit.SECONDS); }
+            catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
+            finally { exchange.close(); }
+        });
+        server.start();
+        try {
+            var client = new IdentityClient("http://127.0.0.1:" + server.getAddress().getPort(), "test-key");
+            assertStatus(HttpStatus.SERVICE_UNAVAILABLE, client);
+        } finally {
+            release.countDown();
+            server.stop(0);
+            executor.shutdownNow();
+        }
     }
 
     private void assertStatus(HttpStatus expected, IdentityClient client) {
