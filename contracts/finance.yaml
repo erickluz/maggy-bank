@@ -2,6 +2,7 @@ openapi: 3.0.3
 info:
   title: Maggy Bank Finance API
   version: 0.1.0
+  description: A identificação e autorização dos clientes estão pendentes de definição.
 paths:
   /internal/accounts:
     post:
@@ -22,8 +23,6 @@ paths:
   /api/finance/account:
     get:
       summary: Consulta a própria conta e saldo
-      security:
-        - bearerAuth: []
       responses:
         '200':
           description: Conta
@@ -34,8 +33,6 @@ paths:
   /api/finance/account/statement:
     get:
       summary: Consulta extrato imediato da própria conta
-      security:
-        - bearerAuth: []
       responses:
         '200':
           description: Lançamentos em ordem decrescente
@@ -48,8 +45,6 @@ paths:
   /api/finance/recipients/{accountNumber}:
     get:
       summary: Confere titular de uma conta de destino
-      security:
-        - bearerAuth: []
       parameters:
         - in: path
           name: accountNumber
@@ -65,8 +60,6 @@ paths:
   /api/finance/transfers:
     post:
       summary: Executa transferência interna idempotente
-      security:
-        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -83,8 +76,6 @@ paths:
   /api/finance/transfers/{requestId}:
     get:
       summary: Recupera o resultado de uma tentativa de transferência
-      security:
-        - bearerAuth: []
       parameters:
         - in: path
           name: requestId
@@ -98,11 +89,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransferReceipt'
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
     OpenAccountRequest:
       type: object

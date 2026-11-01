@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,12 +18,10 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class FinanceController {
     private final FinanceService service;
-    private final TokenVerifier tokens;
     private final byte[] internalKey;
 
-    public FinanceController(FinanceService service, TokenVerifier tokens, @Value("${maggy.internal-key}") String internalKey) {
+    public FinanceController(FinanceService service, @Value("${maggy.internal-key}") String internalKey) {
         this.service = service;
-        this.tokens = tokens;
         this.internalKey = internalKey.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -39,25 +36,28 @@ public class FinanceController {
     }
 
     @GetMapping("/api/finance/account")
-    public FinanceService.Account account(HttpServletRequest request) { return service.accountByCustomer(tokens.customerId(request)); }
+    public FinanceService.Account account() { throw unidentifiedCustomer(); }
 
     @GetMapping("/api/finance/account/statement")
-    public List<FinanceService.StatementEntry> statement(HttpServletRequest request) { return service.statement(tokens.customerId(request)); }
+    public List<FinanceService.StatementEntry> statement() { throw unidentifiedCustomer(); }
 
     @GetMapping("/api/finance/recipients/{number}")
-    public FinanceService.Recipient recipient(@PathVariable String number, HttpServletRequest request) {
-        tokens.customerId(request);
-        return service.recipient(number);
+    public FinanceService.Recipient recipient(@PathVariable String number) {
+        throw unidentifiedCustomer();
     }
 
     @PostMapping("/api/finance/transfers")
     @ResponseStatus(HttpStatus.CREATED)
-    public FinanceService.Receipt transfer(@RequestBody FinanceService.TransferRequest body, HttpServletRequest request) {
-        return service.transfer(tokens.customerId(request), body);
+    public FinanceService.Receipt transfer(@RequestBody FinanceService.TransferRequest body) {
+        throw unidentifiedCustomer();
     }
 
     @GetMapping("/api/finance/transfers/{requestId}")
-    public FinanceService.Receipt receipt(@PathVariable UUID requestId, HttpServletRequest request) {
-        return service.receipt(tokens.customerId(request), requestId);
+    public FinanceService.Receipt receipt(@PathVariable UUID requestId) {
+        throw unidentifiedCustomer();
+    }
+
+    private UnsupportedOperationException unidentifiedCustomer() {
+        return new UnsupportedOperationException("TODO: definir identificação e autorização do cliente");
     }
 }

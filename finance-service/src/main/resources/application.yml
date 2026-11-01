@@ -1,10 +1,11 @@
 server:
   port: 8082
+  forward-headers-strategy: framework
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/maggy_finance}
-    username: ${DB_USER:maggy_finance}
-    password: ${DB_PASSWORD:maggy_finance}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
   flyway:
     enabled: true
 management:
@@ -13,5 +14,4 @@ management:
       exposure:
         include: health
 maggy:
-  jwt-secret: ${JWT_SECRET:local-development-secret-change-before-deployment-32-bytes}
   internal-key: ${INTERNAL_API_KEY:local-internal-key-change-before-deployment}

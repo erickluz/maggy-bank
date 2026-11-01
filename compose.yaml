@@ -20,7 +20,6 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/maggy_finance
       DB_USER: maggy_finance
       DB_PASSWORD: local-finance-password
-      JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-before-deployment-32-bytes}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-local-internal-key-change-before-deployment}
     depends_on:
       postgres:
@@ -37,7 +36,6 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/maggy_identity
       DB_USER: maggy_identity
       DB_PASSWORD: local-identity-password
-      JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-before-deployment-32-bytes}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-local-internal-key-change-before-deployment}
       FINANCE_URL: http://finance:8082
     depends_on:
