@@ -20,6 +20,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/maggy_finance
       DB_USER: maggy_finance
       DB_PASSWORD: local-finance-password
+      IDENTITY_URL: http://identity:8081
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-local-internal-key-change-before-deployment}
     depends_on:
       postgres:

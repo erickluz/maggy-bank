@@ -15,3 +15,4 @@ management:
         include: health
 maggy:
   internal-key: ${INTERNAL_API_KEY:local-internal-key-change-before-deployment}
+  identity-url: ${IDENTITY_URL:http://localhost:8081}

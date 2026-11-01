@@ -2,11 +2,13 @@ openapi: 3.0.3
 info:
   title: Maggy Bank Finance API
   version: 0.1.0
-  description: A identificação e autorização dos clientes estão pendentes de definição.
+  description: As rotas públicas exigem HTTP Basic autenticado pelo serviço de identidade.
 paths:
   /internal/accounts:
     post:
       summary: Abre conta e credita o valor inicial uma única vez
+      security:
+        - internalKey: []
       requestBody:
         required: true
         content:
@@ -23,7 +25,10 @@ paths:
   /api/finance/account:
     get:
       summary: Consulta a própria conta e saldo
+      security: [{ basicAuth: [] }]
       responses:
+        '401': { description: Credenciais ausentes ou inválidas }
+        '503': { description: Serviço de identidade indisponível ou resposta inválida }
         '200':
           description: Conta
           content:
@@ -33,7 +38,10 @@ paths:
   /api/finance/account/statement:
     get:
       summary: Consulta extrato imediato da própria conta
+      security: [{ basicAuth: [] }]
       responses:
+        '401': { description: Credenciais ausentes ou inválidas }
+        '503': { description: Serviço de identidade indisponível ou resposta inválida }
         '200':
           description: Lançamentos em ordem decrescente
           content:
@@ -45,12 +53,15 @@ paths:
   /api/finance/recipients/{accountNumber}:
     get:
       summary: Confere titular de uma conta de destino
+      security: [{ basicAuth: [] }]
       parameters:
         - in: path
           name: accountNumber
           required: true
           schema: { type: string }
       responses:
+        '401': { description: Credenciais ausentes ou inválidas }
+        '503': { description: Serviço de identidade indisponível ou resposta inválida }
         '200':
           description: Destinatário
           content:
@@ -60,6 +71,7 @@ paths:
   /api/finance/transfers:
     post:
       summary: Executa transferência interna idempotente
+      security: [{ basicAuth: [] }]
       requestBody:
         required: true
         content:
@@ -67,6 +79,8 @@ paths:
             schema:
               $ref: '#/components/schemas/TransferRequest'
       responses:
+        '401': { description: Credenciais ausentes ou inválidas }
+        '503': { description: Serviço de identidade indisponível ou resposta inválida }
         '201':
           description: Transferência concluída
           content:
@@ -76,12 +90,15 @@ paths:
   /api/finance/transfers/{requestId}:
     get:
       summary: Recupera o resultado de uma tentativa de transferência
+      security: [{ basicAuth: [] }]
       parameters:
         - in: path
           name: requestId
           required: true
           schema: { type: string, format: uuid }
       responses:
+        '401': { description: Credenciais ausentes ou inválidas }
+        '503': { description: Serviço de identidade indisponível ou resposta inválida }
         '200':
           description: Comprovante
           content:
@@ -89,6 +106,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransferReceipt'
 components:
+  securitySchemes:
+    basicAuth: { type: http, scheme: basic }
+    internalKey: { type: apiKey, in: header, name: X-Internal-Key }
   schemas:
     OpenAccountRequest:
       type: object

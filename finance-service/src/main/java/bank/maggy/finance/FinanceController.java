@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,28 +37,24 @@ public class FinanceController {
     }
 
     @GetMapping("/api/finance/account")
-    public FinanceService.Account account() { throw unidentifiedCustomer(); }
+    public FinanceService.Account account(@RequestAttribute(FinanceAuthentication.CUSTOMER_ID) UUID customerId) { return service.accountByCustomer(customerId); }
 
     @GetMapping("/api/finance/account/statement")
-    public List<FinanceService.StatementEntry> statement() { throw unidentifiedCustomer(); }
+    public List<FinanceService.StatementEntry> statement(@RequestAttribute(FinanceAuthentication.CUSTOMER_ID) UUID customerId) { return service.statement(customerId); }
 
     @GetMapping("/api/finance/recipients/{number}")
     public FinanceService.Recipient recipient(@PathVariable String number) {
-        throw unidentifiedCustomer();
+        return service.recipient(number);
     }
 
     @PostMapping("/api/finance/transfers")
     @ResponseStatus(HttpStatus.CREATED)
-    public FinanceService.Receipt transfer(@RequestBody FinanceService.TransferRequest body) {
-        throw unidentifiedCustomer();
+    public FinanceService.Receipt transfer(@RequestAttribute(FinanceAuthentication.CUSTOMER_ID) UUID customerId, @RequestBody FinanceService.TransferRequest body) {
+        return service.transfer(customerId, body);
     }
 
     @GetMapping("/api/finance/transfers/{requestId}")
-    public FinanceService.Receipt receipt(@PathVariable UUID requestId) {
-        throw unidentifiedCustomer();
-    }
-
-    private UnsupportedOperationException unidentifiedCustomer() {
-        return new UnsupportedOperationException("TODO: definir identificação e autorização do cliente");
+    public FinanceService.Receipt receipt(@RequestAttribute(FinanceAuthentication.CUSTOMER_ID) UUID customerId, @PathVariable UUID requestId) {
+        return service.receipt(customerId, requestId);
     }
 }

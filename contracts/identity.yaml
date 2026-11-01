@@ -2,6 +2,7 @@ openapi: 3.0.3
 info:
   title: Maggy Bank Identity API
   version: 0.1.0
+  description: API para estudo. A abertura de conta ainda não está implementada.
 paths:
   /api/identity/register:
     post:
@@ -25,6 +26,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RegistrationResponse'
+        '400': { description: Dados inválidos }
+        '409': { description: Nome de usuário já utilizado }
+  /api/identity/customers:
+    get:
+      summary: Lista clientes (somente ambiente de estudo)
+      responses:
+        '200':
+          description: Clientes cadastrados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RegistrationResponse' }
+  /api/identity/customers/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Consulta cliente por ID
+      responses:
+        '200':
+          description: Cliente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationResponse' }
+        '404': { description: Cliente não encontrado }
+    put:
+      summary: Substitui nome, usuário e senha do cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: Cliente atualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationResponse' }
+        '400': { description: Dados inválidos }
+        '404': { description: Cliente não encontrado }
+        '409': { description: Nome de usuário já utilizado }
+    delete:
+      summary: Exclui cadastro sem alterar contas no financeiro
+      responses:
+        '204': { description: Cliente excluído }
+        '404': { description: Cliente não encontrado }
   /api/identity/login:
     post:
       summary: Autentica cliente
@@ -36,7 +86,25 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Autenticação pendente de implementação; formato de resposta ainda não definido
+          description: Cliente autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthenticationResponse' }
+        '400': { description: JSON inválido }
+        '401': { description: Credenciais inválidas }
+  /internal/identity/authenticate:
+    get:
+      summary: Autentica credenciais para serviços internos
+      security:
+        - basicAuth: []
+          internalKey: []
+      responses:
+        '200':
+          description: Cliente autenticado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthenticationResponse' }
+        '401': { description: Credenciais ou chave interna inválidas }
   /api/identity/me:
     get:
       summary: Consulta do próprio cliente (identificação pendente de definição)
@@ -48,14 +116,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/RegistrationResponse'
 components:
+  securitySchemes:
+    basicAuth: { type: http, scheme: basic }
+    internalKey: { type: apiKey, in: header, name: X-Internal-Key }
   schemas:
+    AuthenticationResponse:
+      type: object
+      required: [customerId]
+      properties:
+        customerId: { type: string, format: uuid }
+    ApiError:
+      type: object
+      required: [timestamp, status, message, path, errors]
+      properties:
+        timestamp: { type: string, format: date-time }
+        status: { type: integer }
+        message: { type: string }
+        path: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
     RegisterRequest:
       type: object
       required: [displayName, username, password]
       properties:
-        displayName: { type: string }
-        username: { type: string }
-        password: { type: string, format: password }
+        displayName: { type: string, maxLength: 120 }
+        username: { type: string, pattern: '^[a-zA-Z0-9._-]{3,60}$' }
+        password: { type: string, format: password, minLength: 8, maxLength: 72, description: Máximo de 72 bytes em UTF-8 }
     RegistrationResponse:
       type: object
       required: [customerId, displayName, username, accountStatus]
