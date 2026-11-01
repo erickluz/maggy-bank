@@ -12,7 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Configuration
 public class FinanceAuthentication implements WebMvcConfigurer {
-    static final String CUSTOMER_ID = "bank.maggy.finance.authenticatedCustomerId";
+    public static final String CUSTOMER_ID = "bank.maggy.finance.authenticatedCustomerId";
     private final IdentityClient identity;
 
     public FinanceAuthentication(IdentityClient identity) {

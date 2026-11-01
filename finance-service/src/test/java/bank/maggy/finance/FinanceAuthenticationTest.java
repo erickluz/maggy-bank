@@ -1,5 +1,8 @@
 package bank.maggy.finance;
 
+import bank.maggy.finance.api.FinanceController;
+import bank.maggy.finance.application.FinanceService;
+
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

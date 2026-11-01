@@ -11,6 +11,7 @@ import bank.maggy.identity.infrastructure.CustomerRepository;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest(properties = "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration")
 @AutoConfigureMockMvc
@@ -27,7 +28,10 @@ class OpenApiTest {
                 .andExpect(jsonPath("$.paths['/api/identity/customers/{id}'].put").exists())
                 .andExpect(jsonPath("$.paths['/api/identity/login'].post").exists())
                 .andExpect(jsonPath("$.paths['/internal/identity/authenticate'].get").exists())
-                .andExpect(jsonPath("$.paths['/api/identity/me'].get").exists());
+                .andExpect(jsonPath("$.paths['/api/identity/me'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/identity/register'].post.description", containsString("não solicita")))
+                .andExpect(jsonPath("$.paths['/api/identity/customers/{id}'].delete.description", containsString("financeiro")))
+                .andExpect(jsonPath("$.components.schemas.CustomerRequest.properties.password.description", containsString("72 bytes")));
         mvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
     }
 }
